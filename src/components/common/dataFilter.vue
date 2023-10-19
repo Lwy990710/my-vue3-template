@@ -12,7 +12,7 @@
         <el-input
           v-if="item.type==='text'"
           v-model="item.value" clearable
-          :placeholder="`请输入${item.label}`"
+          :placeholder="item.placeholder ? item.placeholder:`请输入${item.label}`"
           class="container_common_formArea-input"
           @keyup.enter="search"
         />
@@ -280,9 +280,11 @@ const search = function(){
     if (item.prop.indexOf('Time') !== -1 || item.prop.indexOf('Date') !== -1){
       if (item.type !== 'daterange' && item.type !== 'datetimerange') {
         temp[item.prop] = Date.parse(item.value + ' 00:00:00')
-      } else temp[item.prop] = item.value
+      }
+    } else if (item.prop === 'processStatus' && item.type === 'multiple'){
+      item.prop = 'processStatusEnumList'
     }
-    else temp[item.prop] = item.value
+    temp[item.prop] = typeof item.value === 'string' ? item.value.replace(/(^\s*)/g, "") : item.value
   })
   _emit('search', temp)
 }
@@ -324,9 +326,10 @@ onBeforeMount(() => {
       if ((item.dataKey === 'processStatus' || item.prop) && item.type === 'multiple'){
         filterForm.push({
           label: item.title ? item.title : item.label,
-          prop: 'processStatusEnumList',
+          prop: item.dataKey ? item.dataKey : item.prop,
           value: '',
           type: item.type,
+          placeholder: item.placeholder,
           options: item.options ? item.options : []
         })
       } else if (item.type === 'daterange' || item.type === 'datetimerange'){
@@ -336,6 +339,7 @@ onBeforeMount(() => {
             prop: item.dataKey ? item.dataKey : item.prop,
             value: '',
             type: item.type,
+            placeholder: item.placeholder,
             options: item.options ? item.options : [],
             shortcuts: item.shortcuts ? item.shortcuts : []
           }
@@ -346,6 +350,7 @@ onBeforeMount(() => {
           prop: item.dataKey ? item.dataKey : item.prop,
           value: '',
           type: item.type,
+          placeholder: item.placeholder,
           options: item.options ? item.options : []
         })
       }
@@ -360,6 +365,7 @@ onBeforeMount(() => {
       prop: item.dataKey ? item.dataKey : item.prop,
       value: '',
       type: item.type,
+      placeholder: item.placeholder,
       options: item.options ? item.options : []
     })
   })

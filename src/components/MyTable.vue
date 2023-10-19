@@ -14,16 +14,35 @@
       >
         新增
       </el-button>
-      <el-button
+      <el-dropdown
         v-if="needPrint"
-        color="#48C776"
-        style="color: #FFFFFF;"
-        @click="printSetCar"
+        trigger="click"
+        @command="printSetCar"
       >
-        打印派车单
-      </el-button>
+        <el-button
+          class="handle-btn"
+          color="#4a78bd"
+          style="color: #666"
+          plain
+        >
+          打印派车单
+          <el-icon class="el-icon--right">
+            <arrow-down />
+          </el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="normal">
+              通用格式
+            </el-dropdown-item>
+            <el-dropdown-item command="toc">
+              ToC订单格式
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-popconfirm
-        v-if="optionsBtn!=='material'"
+        v-if="optionsBtn!=='material'&&pageType!=='driver'"
         :title="`是否确定删除 ${selections.length} 条数据`"
         confirm-button-text="确定"
         cancel-button-text="取消"
@@ -31,10 +50,12 @@
       >
         <template #reference>
           <el-button
-            type="danger"
-            style="color: #FFFFFF;"
+            class="handle-btn-delete ml10"
+            color="#f56c6c"
+            style="color: #666"
+            plain
           >
-            批量删除
+            {{ pageType==='driver'? '批量作废':'批量删除' }}
           </el-button>
         </template>
       </el-popconfirm>
@@ -76,17 +97,24 @@
         </el-button>
       </el-upload>
       <el-button
-        v-if="needExport" type="warning"
-        style="margin-bottom: 2px" @click="exportExcel"
+        v-if="needExport"
+        class="handle-btn ml12"
+        color="#4a78bd"
+        style="color: #666"
+        plain
+        @click="exportExcel"
       >
         批量导出
       </el-button>
       <el-button
         v-if="needStockUp"
-        color="#171c27" style="color: #FFFFFF;float:right"
+        class="handle-btn ml12"
+        color="#4a78bd"
+        style="color: #666;float:right"
+        plain
         @click="stockUp"
       >
-        一键备货
+        手动备货
       </el-button>
       <el-button
         v-if="false"
@@ -240,9 +268,9 @@
         fixed="left"
       >
         <template #default="{row}">
-          <div v-if="setCarBook||(row.processStatus&&row.processStatus === 'TRANS_DETAIL_AUDIT_ING')" class="flex-center">
+          <div v-if="!row.subscribeTime||(row.processStatus&&row.processStatus === 'TRANS_DETAIL_AUDIT_ING')" class="flex-center">
             <el-button
-              v-if="setCarBook"
+              v-if="!row.subscribeTime"
               size="small"
               @click="book(row)"
             >
@@ -413,8 +441,18 @@
             >
               确定
             </el-button>
+            <el-button
+              v-if="!showDelete&&scope.row.processStatus==='TRANS_CREATE'"
+              class="row-options-btn"
+              text
+              type="primary"
+              style="background:transparent;color:rgb(0, 160, 35)"
+              @click="sendOrder(scope.row)"
+            >
+              派单
+            </el-button>
             <el-popconfirm
-              v-if="optionsBtn!=='material'"
+              v-if="optionsBtn!=='material'&&pageType!=='driver'&&showDelete"
               title="是否确定删除这条数据"
               confirm-button-text="确定"
               cancel-button-text="再想想"
@@ -426,10 +464,19 @@
                   type="danger"
                   class="row-options-btn"
                 >
-                  删除
+                  {{ pageType==='driver'? '作废':'删除' }}
                 </el-button>
               </template>
             </el-popconfirm>
+            <el-button
+              v-if="pageType==='driver'"
+              text
+              type="success"
+              style="background:transparent;margin:0;padding:0"
+              @click="changeCarTeam(scope.row)"
+            >
+              转移车队
+            </el-button>
             <slot
               name="expandOptions"
               :row="scope.row"
@@ -478,15 +525,17 @@ let emit = defineEmits([
   "subCarSlip", "deleteRecords",
   'addMaterial', 'sizeChange', 'showExpand',
   'allot', 'scheduleTime', 'createSlip', 'showHeaderSearch', 'doHeaderSearch', 'submit', 'downloadTemplate',
-  'printSetCar', 'editTableHeader', 'stockUp', 'printCommand', 'refresh', 'setCarSetting', 'book', 'moreAction', 'examine'
+  'printSetCar', 'editTableHeader', 'stockUp', 'printCommand', 'refresh', 'setCarSetting', 'book', 'moreAction', 'examine', 'sendOrder', 'changeCarTeam'
 ])
 let isDetail = ref(false)
 const permissionsArr = JSON.parse(sessionStorage.getItem('userPermissions'))
 let printCommand = (command) => emit('printCommand', command)
 let stockUp = () => emit('stockUp')
 let downloadTemplate = () => emit('downloadTemplate')
-let printSetCar = () => emit('printSetCar')
+let printSetCar = (command) => emit('printSetCar', command)
+const changeCarTeam = (value) => emit('changeCarTeam', value)
 let addFile = () => emit('addFile')
+const sendOrder = (val) => emit('sendOrder', val)
 let goCompile = (id, carrierCode, scope) => emit('goCompile', id, carrierCode, scope)
 let selectionChange = (selection) => {
   selections.length = 0
@@ -605,6 +654,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  pageType: {
+    type: String,
+    default: ''
+  },
   needAddFile: {
     type: Boolean,
     default: true
@@ -714,6 +767,10 @@ const props = defineProps({
     default: ''
   },
   isLogistics: {
+    type: Boolean,
+    default: false
+  },
+  showDelete: {
     type: Boolean,
     default: false
   },

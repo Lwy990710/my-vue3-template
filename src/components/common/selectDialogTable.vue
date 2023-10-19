@@ -2,12 +2,14 @@
   <div>
     <el-dialog
       v-model="showDialog"
+      lock-scroll
       :title="title"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="false"
       :fullscreen="fullscreen"
       :width="width"
+      destroy-on-close
     >
       <template #header="{ titleId, titleClass }">
         <div class="jx-dialog-header">
@@ -51,7 +53,7 @@
         :loading="loading"
         :show-tips="false"
         small
-        :max-height="500"
+        :max-height="maxHeight"
         :current-page="dataSource.currentPage"
         :table-header="dataSource.tableHeader"
         :table-data="dataSource.tableData"
@@ -60,6 +62,8 @@
         :need-change-size="needChangeSize"
         :need-end-control="needEndControl"
         :need-selection="needSelection"
+        :row-style="rowStyle"
+        :header-cell-style="appendTableStyle"
         @chooseRow="chooseRow"
         @current-change="dataSource.currentPageChange($event,dataSource,proxy.$refs.simpleTable)"
         @sizeChange="dataSource.pageSizeChange($event,dataSource,proxy.$refs.simpleTable)"
@@ -98,6 +102,7 @@
 <script setup>
 import { onBeforeMount, reactive, ref, getCurrentInstance, watch, computed } from 'vue'
 import SimpleTable from '@/components/SimpleTable.vue'
+import { settings } from 'nprogress'
 const _props = defineProps({
   // 表格loading
   loading: {
@@ -133,6 +138,11 @@ const _props = defineProps({
     default: () => { return {} }
   },
 
+  rowStyle: {
+    type: [Boolean, Function],
+    default: false
+  },
+
   // 弹框标题
   title: {
     type: String,
@@ -164,6 +174,16 @@ const _props = defineProps({
   needSelection: {
     type: Boolean,
     default: false
+  },
+  maxHeight: {
+    type: Number,
+    default: 500
+  },
+  appendTableStyle: {
+    type: Object,
+    default: () => {
+      return { background: '#454c5c', color: '#fff', borderColor: 'rgba(192, 192, 192,.5)' }
+    }
   }
 
 })
@@ -183,7 +203,6 @@ watch(() => _props.isShow, () => {
     _props.dataSource.initData()
   }
 })
-
 const refresh = () => {
   _props.dataSource.initData()
 }

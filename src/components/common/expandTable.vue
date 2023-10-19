@@ -9,7 +9,7 @@
           {{ idx+1 }}
         </div> -->
         <div class="descriptions-item long">
-          <span class="descriptions-item-span">套机码：</span>
+          <span class="descriptions-item-span">物料代码: </span>
           <span class="descriptions-item-span"> {{ item.materialCode }}</span>
         </div>
         <div class="descriptions-item dlong">
@@ -22,7 +22,11 @@
         </div>
         <div class="descriptions-item">
           <span class="descriptions-item-span">体积：</span>
-          <span class="descriptions-item-span"> {{ item.volume }}</span>
+          <span class="descriptions-item-span"> {{ item.volume.toFixed(2) + ' m³' }}</span>
+        </div>
+        <div v-if="item.materialStatus" class="descriptions-item">
+          <span class="descriptions-item-span">品质：</span>
+          <span class="descriptions-item-span"> {{ item.materialStatus==='BAD'?'不良品':'良品' }}</span>
         </div>
       </div>
     </div>

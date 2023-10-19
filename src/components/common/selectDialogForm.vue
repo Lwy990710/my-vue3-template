@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="isShow">
     <el-dialog
       v-model="showDialog"
       :title="title"
@@ -125,13 +125,16 @@ const _props = defineProps({
 
 watch(() => _props.isShow, () => {
   if (_props.isShow && Object.values(_props.formData).length !== 0){
-    Object.assign(myformData, _props.formData)
+    Object.assign(myformData.value, _props.formData)
   }
 })
 
-let myformData = reactive({})
+let myformData = ref({})
 const _emits = defineEmits(['closeDialog', 'inputDone', 'emitOpenDialog'])
-const closeDialog = () => _emits('closeDialog') // 关闭弹窗事件
+const closeDialog = () => {
+  myformData.value = {}
+  _emits('closeDialog')
+}// 关闭弹窗事件
 
 const showDialog = computed({
   get(){
@@ -147,7 +150,8 @@ const emitOpenDialog = (prop) => _emits('emitOpenDialog', prop) // 输入框按�
 const submitForm = async () => {
   await proxy.$refs.ruleFormRef.validate((valid, fields) => {
     if (valid) {
-      _emits('inputDone', JSON.parse(JSON.stringify(myformData)))
+      _emits('inputDone', JSON.parse(JSON.stringify(myformData.value)))
+      myformData.value = {}
       proxy.$refs.ruleFormRef.resetFields()
     } else {
       console.log('error submit!', fields)
@@ -157,7 +161,7 @@ const submitForm = async () => {
 
 const updateDialogInput = (propObj) => {
   Object.keys(propObj).forEach(key => {
-    myformData[key] = propObj[key]
+    myformData.value[key] = propObj[key]
   })
 }
 

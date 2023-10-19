@@ -22,7 +22,7 @@
         v-for="item,idx in openTab.slice(0,10)"
         :key="item.name"
         class="tab pointer mr10 flex-center"
-        :style="activeIndex===idx?{background:'#4a78bd',color:'#fff',transition:'none'}:{}"
+        :style="activeIndex===idx?{background:activeColor,color:'#fff',transition:'none',textShadow: '1px 1px 2px #fff'}:{}"
         @click="changeRoute(idx,item.path,item.query)"
       >
         <span class="router-span pointer .text-1" :title="item.meta.title">
@@ -58,8 +58,8 @@
       >
         <template #reference>
           <el-button
-            class="m-2" style="border-radius: 20px;color:#fff;background:#203339;height:28px"
-            :style="activeIndex>=10?{background:'#4a78bd'}:{}"
+            class="m-2" style="border-radius: 20px;color:#666666;background:#e9f8f3;height:28px"
+            :style="activeIndex>=10?{background:activeColor,borderColor:activeColor,color:'#fff'}:{borderColor:activeColor}"
           >
             更多...
           </el-button>
@@ -68,8 +68,9 @@
           <div
             v-for="item,idx in openTab.slice(10,openTab.length)"
             :key="item.name"
-            class="tab pointer mr10 flex-center mb10"
-            :style="activeIndex===idx+10?{background:'#4a78bd',color:'#fff',transition:'none'}:{}"
+            class="tab test pointer mr10 flex-center mb10"
+            :style="activeIndex===idx+10?{background:activeColor,color:'#fff',transition:'none',textShadow: '1px 1px 2px #fff',borderColor:activeColor}:{borderColor:activeColor}"
+
             @click="changeRoute(idx+10,item.path,item.query)"
           >
             <span class="router-span pointer .text-1" :title="item.meta.title">
@@ -98,7 +99,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 
 const emits = defineEmits(['changeCollapse'])
-
+const activeColor = sessionStorage.getItem('runningProject') === 'logistics' ? ref('#217346') : ref('#4a78bd')
 const props = defineProps({
   bgColor: {
     type: String,
@@ -159,6 +160,7 @@ watch(activeIndex, () => {
 })
 
 onBeforeMount(() => {
+
   if (sessionStorage.getItem('routerTabs')){
     openTab.length = 0
     openTab.push(...JSON.parse(sessionStorage.getItem('routerTabs')))
@@ -174,6 +176,7 @@ onMounted(() => {
     isCollapse.value = true
     emits('changeCollapse', isCollapse.value)
   }
+
 })
 
 const changeRoute = (idx, path, query) => {
@@ -237,6 +240,10 @@ const removeTab = (idx) => {
 }
 </script>
 
+<script>
+
+</script>
+
 <style lang="less" scoped>
 .mytabNav{
   color: #fff;
@@ -256,9 +263,10 @@ const removeTab = (idx) => {
   .tab{
     z-index: 100;
     font-size: calc(@4x + @3x);
-    border: 1px solid #4a78bd;
-    padding: @3x @4x;
-    border-radius: 20px;
+    border: 1px solid v-bind(activeColor);
+    padding: @3x @3x;
+    border-radius: 8px;
+    box-shadow: 0px 0px 2px 0px #707070;
     width: 100px;
     transition: all .5s;
     overflow: hidden;
@@ -278,10 +286,12 @@ const removeTab = (idx) => {
   .tab:hover .closeIcon,.router-span:hover .closeIcon{
     visibility:visible;
     position:static;
+
   }
   .tab:hover{
-    background: #4a78bd;
+    background: v-bind(activeColor);
     color: #fff;
+    text-shadow: 1px 1px 2px #fff;
   }
   .closeIcon{
     border-radius: 50%;
@@ -295,4 +305,10 @@ const removeTab = (idx) => {
     background: @white;
     color: @navColor;
   }
+.test{
+  border: 1px solid v-bind(activeColor);
+}
+.test:hover{
+  background: #5d7779;
+}
 </style>

@@ -83,8 +83,9 @@
 
 <script setup>
 import { ref, unref, h, watch, onMounted, getCurrentInstance } from 'vue'
-import { Loading as LoadingIcon } from '@element-plus/icons-vue'
+import { Loading as LoadingIcon, SortUp, SortDown } from '@element-plus/icons-vue'
 import { ElCheckbox, ElButton, TableV2FixedDir } from 'element-plus'
+
 import { DataTool } from '@/js/tool-class/dataTool'
 import { useRouter } from 'vue-router'
 const { proxy } = getCurrentInstance()
@@ -183,6 +184,11 @@ const _props = defineProps({
     default: () => {return {}}
   },
 
+  cellHandleFun: {
+    type: Function,
+    default: () => {return ''}
+  },
+
   // 是否需要自定义渲染函数
   needCustomizeCellRenderer: {
     type: Boolean,
@@ -279,8 +285,14 @@ const _props = defineProps({
   needPagination: {
     type: Boolean,
     default: true
+  },
+  useUpdateHeader: {
+    type: Boolean,
+    default: true
   }
 })
+
+const pageColor = ref('#454c5c')
 
 let tableData = ref(_props.tableData) // 渲染数据
 const height = ref(800) // 表格高度
@@ -329,7 +341,8 @@ const initColumns = function(){
       return [h(
         'div',
         { class: `header-cell-${item.dataKey} header-cell`, title: item.title }, item.title,
-        [h('div', {
+        [h('div', { class: 'sort-icon-div' }, [h(SortDown, { class: 'sort-icon', onClick: onSort.bind(this, [item.dataKey, 'down']) }),
+          h(SortUp, { class: 'sort-icon', onClick: onSort.bind(this, [item.dataKey, 'up']) })]), h('div', {
           // 动态调整列宽度逻辑 ， 重点： onMousedown、绝对定位、left属性
           onMousedown: (event) => {
             startX = event.clientX
@@ -370,7 +383,6 @@ const initColumns = function(){
                 startX = 0
               } else dom.style.left = column.width - 15
             })
-
           },
           class: `header-border-${item.dataKey} header-border`, style: `left:${item.width - 15}px;top:-10px` })])]
     } : () => {
@@ -388,6 +400,16 @@ const initColumns = function(){
   })
 }()
 
+const onSort = ([dataKey, type]) => {
+  tableData.value.sort((a, b) => {
+    if (a[dataKey] < b[dataKey]) return type === 'up' ? -1 : 1
+    else if (a[dataKey] > b[dataKey]) return type === 'up' ? 1 : -1
+    else return 0
+  })
+
+  // console.log(tableData.value, dataKey)
+}
+
 // 默认单元格渲染函数
 const defaultCellRenderer = ({ forMatValue, rowIndex, column, rowData }) => {
   const settings = JSON.parse(localStorage.getItem('userSettings'))
@@ -395,9 +417,10 @@ const defaultCellRenderer = ({ forMatValue, rowIndex, column, rowData }) => {
   if (settings) style = `color:${settings.tableSetting.color};font-size:${settings.tableSetting.fontSize}px`
   const key = column.prop ? column.prop : column.key
   const expandClass = _props.cellHandle.hasOwnProperty(key) ? _props.cellHandle[key].class : ''
+  const expandClassFun = _props.cellHandleFun({ key, rowData })
   return [h(
     'div',
-    { class: `row-cell ${expandClass}`, title: forMatValue, style: style.length !== 0 ? style : '',
+    { class: `row-cell ${expandClass} ${expandClassFun}`, title: forMatValue, style: style.length !== 0 ? style : '',
       onMouseenter: (e) => {
         if (isMouseDown_V.value && isKeyDown_V.value){
           selections.value.length = 0
@@ -504,6 +527,7 @@ const initHandleColumns = () => {
 
     },
     headerCellRenderer: () => {
+      const handelClass = _props.useUpdateHeader ? 'table-handel-btn' : 'table-handel-btn disable'
       return [h('div', { class: 'table-handel-div-header' }, [h(
         'span',
         { style: 'color:#fff;margin-right:10px' },
@@ -513,7 +537,7 @@ const initHandleColumns = () => {
         { onClick: () => { _emits('refresh') }, icon: "Refresh", text: true, style: "color:#ffa500;background:transparent", class: 'table-handel-btn' }
       ), h(
         ElButton,
-        { onClick: () => { _emits('editTableHeader') }, icon: "Operation", text: true, style: "color:#ffa500;background:transparent", class: 'table-handel-btn' }
+        { onClick: () => { _emits('editTableHeader') }, icon: "Operation", text: true, style: "color:#ffa500;background:transparent", class: handelClass }
       )])]
     }
   })
@@ -551,6 +575,8 @@ watch(() => router.currentRoute.value.path, (newValue, oldValue) => {
 })
 
 onMounted(() => {
+  if (sessionStorage.getItem('runningProject') === 'logistics') pageColor.value = '#217346'
+
   // 监听全局键盘事件，判断是否按下Control
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Control'){
@@ -824,7 +850,7 @@ defineExpose({
 }
 :deep(.el-pagination){
   .is-active{
-    background: #454c5c !important;
+    background: v-bind(pageColor) !important;
   }
   .el-input__wrapper{
     height: 26px !important;
@@ -935,5 +961,19 @@ defineExpose({
 }
 .el-vl__vertical .el-scrollbar__thumb{
   left:80%;
+}
+.sort-icon-div{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 4px;
+}
+.sort-icon{
+  width: 1em;
+  height:1em;
+  cursor: pointer;
+}
+.disable{
+  display: none;
 }
 </style>
