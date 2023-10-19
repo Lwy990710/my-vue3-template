@@ -68,19 +68,7 @@ const formatExcelDate = (num, format = '-') => {
  * 创建请求实例
  */
 const jxRequest = axios.create({
-  // baseURL: 'http://8.134.93.171:9090/wms', // http 接口
-
-  // baseURL: 'http://192.168.28.121:6061/wms', // 文浩本地
-
-  //baseURL: 'http://192.168.28.125:6061/wms', // 楷星本地
-
-  baseURL: 'http://192.168.28.108:6061/wms', // 进华本地
-
-  // baseURL: 'https://platform.jiaxianwuliu.com:9900/wms', // https 接口
-
-  //baseURL: 'https://logistics.jiaxianwuliu.com:7700/wms', // https 接口
-
-  //baseURL: process.env.VUE_APP_TITLE !== 'pro' ? 'http://8.134.136.196:6061/wms' : 'https://logistics.jiaxianwuliu.com:7700/wms',
+  // baseURL: '', // http 接口
   headers: {
     "Content-Type": "application/json"
   }
@@ -92,26 +80,7 @@ const jxRequest = axios.create({
 jxRequest.interceptors.request.use(
 
   // 对请求之前需要做的操作
-  config => {
-
-    if (config.url.indexOf('imMessage') === -1) loading.value = true
-
-    console.log('---------请求拦截---------' + config.url + `  请求开始时间：${ getTime() }`)
-    config.requestStartTime = Date.parse(new Date())
-    if (config.url.split('?')[0] === '/permission/login'){
-      return config
-    }
-    else {
-      // 添加请求token
-      const userInfo = JSON.parse(sessionStorage.getItem('userInfo'))
-      if (userInfo && userInfo.token) {
-        config.headers['token'] = userInfo.token
-      } else {
-        router.push('/login')
-      }
-      return config
-    }
-  },
+  config => {},
 
   // 请求错误时需要做的操作
   error => {
@@ -126,39 +95,11 @@ jxRequest.interceptors.response.use(
 
   // 对响应数据需要做的操作
   response => {
-    loading.value = false
-    if (response.data.code !== 200){
-      if (!errorHandle(response.data.code, response.data.message, router)) return
-    }
-    console.log('---------响应拦截---------' + response.config.url + `  请求响应时间：${ getTime() }`)
-    response.responseTime = Date.parse(new Date())
-
-    // 接口响应超过10秒钟
-    if (response.responseTime - response.config.requestStartTime >= 20000) {
-      // ElMessage.warning('网络不太好，请稍等噢')
-      console.warn(response.config.url + '该接口响应时间过长')
-    }
     return response
   },
 
   // 响应错误处理
   error => {
-    loading.value = false
-    let alertText = '出现了预期之外的错误'
-    if (error.code === 'ERR_NETWORK'){
-      alertText = `系统正在更新，请稍后再试！`
-    }
-    else if (error.code === 'ERR_BAD_REQUEST'){
-      alertText = `出现了预期之外的错误，请检查excel数据有无如下错误!<br/><br/>
-      1、体积、数量的字段格式要为数字<br/>
-      2、日期要为文本格式，否则可能会出现日期错乱<br/>
-      3、确保是以下的业务类型之一（前置仓调拨、商家工程、前置仓销售、商家入仓）`
-    }
-    ElMessageBox.alert(alertText, '警告', {
-      type: 'error',
-      confirmButtonText: '确定',
-      dangerouslyUseHTMLString: true
-    })
     console.log(error)
   }
 )

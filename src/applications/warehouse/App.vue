@@ -39,26 +39,7 @@ onMounted(() => {
 })
 
 watch(() => route.path, (newPath, oldPath) => {
-  if (route.path === '/login' || route.path === '/padHome' || route.path === '/trajectory') {
-    if (watermark.value) watermark.value.destroy()
 
-  } else if (route.path.indexOf('print') !== -1){
-    if (watermark.value) watermark.value.destroy()
-  } else {
-    let userInfo = JSON.parse(sessionStorage.getItem('userInfo'))
-    if (!userInfo) return
-    if (watermark.value) watermark.value.destroy()
-    watermark.value = new Watermark({
-      // 传参
-      content: ` ${userInfo?.nickName}`,
-      fontSize: '16',
-      color: 'grey',
-      alpha: 0.07,
-      width: '22',
-      height: '90'
-    })
-    watermark.value.create()
-  }
 }, { immediate: true })
 
 function throttle(func, wait) {
